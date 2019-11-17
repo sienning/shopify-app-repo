@@ -1,11 +1,11 @@
 import { EmptyState, Layout, Page } from '@shopify/polaris';
 import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
 import store from 'store-js';
-import ResourceListWithProducts from '../components/ResourcesList';
+import Clients from '../components/Clients';
 
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 
-class Index extends React.Component {
+class ListClients extends React.Component {
   state = { open: false };
   render() {
     const emptyState = !store.get('ids');
@@ -38,7 +38,7 @@ class Index extends React.Component {
             </EmptyState>
           </Layout>
         ) : (
-            <ResourceListWithProducts />
+            <Clients />
           )}
       </Page>
     );
@@ -51,4 +51,4 @@ class Index extends React.Component {
 }
 
 
-export default Index;
+export default ListClients;

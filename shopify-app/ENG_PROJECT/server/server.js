@@ -11,6 +11,9 @@ import * as handlers from "./handlers/index";
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
 const dev = process.env.NODE_ENV !== "production";
+const getSubscriptionUrl = require('./handlers/mutations/get-subscription-url.js');
+const {receiveWebhook, registerWebhook} = require('@shopify/koa-shopify-webhooks');
+
 const app = next({
   dev
 });
@@ -34,10 +37,34 @@ app.prepare().then(() => {
         ctx.cookies.set("shopOrigin", shop, {
           httpOnly: false
         });
-        ctx.redirect("/");
+
+        const registration = await registerWebhook({
+          address: `${process.env.HOST}/webhooks/products/create`,
+          topic: 'PRODUCTS_CREATE',
+          accessToken,
+          shop,
+          apiVersion: ApiVersion.October19
+        });
+
+        if (registration.success) {
+          console.log('Successfully registered webhook!');
+        } else {
+          console.log('Failed to register webhook', registration.result);
+        }
+
+        // ctx.redirect("/");
+        await getSubscriptionUrl(ctx, accessToken, shop);
+
       }
     })
   );
+
+  const webhook = receiveWebhook({secret: process.env.SHOPIFY_API_SECRET_KEY});
+  router.post('/webhooks/products/create', webhook, (ctx) => {
+    console.log("Hello")
+    console.log('received webhook: ', ctx.state.webhook);
+  });
+
   server.use(
     graphQLProxy({
       version: ApiVersion.October19
@@ -50,6 +77,7 @@ app.prepare().then(() => {
   });
   server.use(router.allowedMethods());
   server.use(router.routes());
+
   server.listen(port, () => {
     console.log(`> Ready on http://localhost:${port}`);
   });
